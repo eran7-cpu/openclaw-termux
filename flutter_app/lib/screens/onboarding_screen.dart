@@ -61,6 +61,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         arguments: onboardingArgs,
         environment: {
           'PROOT_TMP_DIR': config['PROOT_TMP_DIR']!,
+          'PROOT_NO_SECCOMP': config['PROOT_NO_SECCOMP']!,
+          'PROOT_LOADER': config['PROOT_LOADER']!,
+          'PROOT_LOADER_32': config['PROOT_LOADER_32']!,
+          'LD_LIBRARY_PATH': config['LD_LIBRARY_PATH']!,
           'HOME': '/root',
           'TERM': 'xterm-256color',
           'LANG': 'en_US.UTF-8',

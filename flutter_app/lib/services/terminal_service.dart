@@ -18,13 +18,21 @@ class TerminalService {
     final homeDir = '$filesDir/home';
     final prootPath = '$nativeLibDir/libproot.so';
 
+    final libDir = '$filesDir/lib';
+
     return {
       'executable': prootPath,
       'rootfsDir': rootfsDir,
       'tmpDir': tmpDir,
       'configDir': configDir,
       'homeDir': homeDir,
+      'libDir': libDir,
+      'nativeLibDir': nativeLibDir,
       'PROOT_TMP_DIR': tmpDir,
+      'PROOT_NO_SECCOMP': '1',
+      'PROOT_LOADER': '$nativeLibDir/libprootloader.so',
+      'PROOT_LOADER_32': '$nativeLibDir/libprootloader32.so',
+      'LD_LIBRARY_PATH': '$libDir:$nativeLibDir',
     };
   }
 
