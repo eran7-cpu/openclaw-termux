@@ -50,50 +50,74 @@ class BootstrapManager(
         val rootfs = File(rootfsDir)
         rootfs.mkdirs()
 
-        // Android's filesystem doesn't support hard links in app storage.
-        // tar will report errors for hard links (e.g. perl5.38.2 -> perl)
-        // but the actual files are still extracted. We collect stderr and
-        // only fail if /bin/bash wasn't extracted (real failure).
-        val process = ProcessBuilder(
+        // Android's tar can't handle:
+        // 1. Hard links (no support in app storage)
+        // 2. Symlinks to absolute paths (rejects as "not under" extraction dir)
+        //
+        // Solution: use proot with --link2symlink to extract.
+        // proot translates all paths and converts hard links to symlinks.
+        val prootPath = "$nativeLibDir/libproot.so"
+
+        val pb = ProcessBuilder(
+            prootPath,
+            "-0",
+            "--link2symlink",
+            "-r", rootfsDir,
+            "-b", "/dev",
+            "-b", "/proc",
+            "-w", "/",
+            "/bin/sh", "-c",
+            "tar xzf '$tarPath' -C / --no-same-owner 2>&1 || true"
+        )
+        pb.environment()["PROOT_TMP_DIR"] = tmpDir
+        pb.redirectErrorStream(true)
+
+        // First attempt: extract with proot (needs /bin/sh to exist in rootfs)
+        // But on first extract the rootfs is empty, so proot can't run /bin/sh.
+        // Fallback: plain tar, ignoring errors, then verify.
+        val plainProcess = ProcessBuilder(
             "tar", "xzf", tarPath, "-C", rootfsDir,
-            "--no-same-owner", "--no-same-permissions"
-        ).redirectErrorStream(true).start()
+            "--no-same-owner", "--no-same-permissions", "--warning=no-unknown-keyword"
+        )
+        plainProcess.redirectErrorStream(true)
 
-        val output = process.inputStream.bufferedReader().readText()
-        process.waitFor()
+        val proc = plainProcess.start()
+        // Drain output to prevent blocking
+        val output = proc.inputStream.bufferedReader().readText()
+        proc.waitFor()
+        // tar will exit non-zero due to symlink/hardlink errors — that's expected
 
-        // Fix hard links that failed: create symlinks instead
-        fixFailedHardLinks(output)
-
-        // Verify extraction actually worked (bin/bash must exist)
+        // Verify extraction worked (bin/bash must exist)
         if (!File("$rootfsDir/bin/bash").exists()) {
-            throw RuntimeException("Rootfs extraction failed: /bin/bash not found. tar output: $output")
+            throw RuntimeException("Rootfs extraction failed: /bin/bash not found after tar")
+        }
+
+        // Now that rootfs has /bin/sh, use proot to fix symlinks that tar skipped.
+        // Re-extract just the problematic entries with proot handling links.
+        try {
+            if (File(tarPath).exists()) {
+                val fixProc = ProcessBuilder(
+                    prootPath,
+                    "-0",
+                    "--link2symlink",
+                    "-r", rootfsDir,
+                    "-b", "$tarPath:$tarPath",
+                    "-w", "/",
+                    "/bin/tar", "xzf", tarPath, "-C", "/",
+                    "--no-same-owner", "--overwrite"
+                )
+                fixProc.environment()["PROOT_TMP_DIR"] = tmpDir
+                fixProc.redirectErrorStream(true)
+                val fixProcess = fixProc.start()
+                fixProcess.inputStream.bufferedReader().readText()
+                fixProcess.waitFor()
+            }
+        } catch (_: Exception) {
+            // Best effort — the initial extraction got the essential files
         }
 
         // Clean up tarball
         File(tarPath).delete()
-    }
-
-    private fun fixFailedHardLinks(tarOutput: String) {
-        // Parse "tar: can't link 'X' -> 'Y': Permission denied" and create symlinks
-        val linkPattern = Regex("""can't link '([^']+)' -> '([^']+)'""")
-        for (match in linkPattern.findAll(tarOutput)) {
-            val source = match.groupValues[1]  // the new link that failed
-            val target = match.groupValues[2]  // the existing file
-            val sourceFile = File("$rootfsDir/$source")
-            val targetFile = File("$rootfsDir/$target")
-
-            if (targetFile.exists() && !sourceFile.exists()) {
-                try {
-                    // Create parent dirs if needed
-                    sourceFile.parentFile?.mkdirs()
-                    // Copy the file since symlinks may also not work
-                    targetFile.copyTo(sourceFile, overwrite = true)
-                } catch (_: Exception) {
-                    // Best effort — non-critical files like perl aliases
-                }
-            }
-        }
     }
 
     fun installBionicBypass() {
