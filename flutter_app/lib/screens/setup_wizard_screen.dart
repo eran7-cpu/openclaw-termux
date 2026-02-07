@@ -57,23 +57,29 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     child: _buildSteps(state),
                   ),
                   if (state.hasError) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: theme.colorScheme.error),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              state.error ?? 'Unknown error',
-                              style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.error_outline, color: theme.colorScheme.error),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  state.error ?? 'Unknown error',
+                                  style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

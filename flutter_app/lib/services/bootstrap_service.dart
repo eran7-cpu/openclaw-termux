@@ -96,6 +96,9 @@ class BootstrapService {
         '/usr/lib/apt/methods/* /usr/bin/perl* /usr/bin/bash '
         '/bin/bash /bin/sh 2>/dev/null; '
         'chmod -R 755 /usr/sbin /usr/lib/dpkg 2>/dev/null; '
+        'chmod +x /var/lib/dpkg/info/* 2>/dev/null; '
+        'chmod +x /usr/share/debconf/* 2>/dev/null; '
+        'chmod -R +x /usr/lib/dpkg/ 2>/dev/null; '
         'chmod 755 /lib/*/ld-linux-*.so* /usr/lib/*/ld-linux-*.so* 2>/dev/null; '
         'echo permissions_fixed',
       );
@@ -130,9 +133,33 @@ class BootstrapService {
       ));
       // Use -q to suppress download progress so dpkg errors are visible
       // in the error output (last 2000 chars).
-      await NativeBridge.runInProot(
-        'apt-get -q install -y --no-install-recommends ca-certificates curl gnupg',
-      );
+      // Retry logic: if first attempt fails, repair dpkg and try again.
+      try {
+        await NativeBridge.runInProot(
+          'apt-get -q install -y --no-install-recommends '
+          '-o Dpkg::Options::="--force-confdef" '
+          'ca-certificates curl gnupg',
+        );
+      } catch (e) {
+        onProgress(const SetupState(
+          step: SetupStep.installingNode,
+          progress: 0.2,
+          message: 'Repairing packages and retrying...',
+        ));
+        // Fix permissions again (dpkg may have extracted new scripts)
+        await NativeBridge.runInProot(
+          'chmod +x /var/lib/dpkg/info/* 2>/dev/null; '
+          'chmod -R +x /usr/lib/dpkg/ 2>/dev/null; '
+          'dpkg --configure -a 2>&1 || true; '
+          'apt --fix-broken install -y 2>&1 || true',
+        );
+        // Second attempt
+        await NativeBridge.runInProot(
+          'apt-get -q install -y --no-install-recommends '
+          '-o Dpkg::Options::="--force-confdef" '
+          'ca-certificates curl gnupg',
+        );
+      }
 
       // Verify curl is available before proceeding
       await NativeBridge.runInProot('which curl');
@@ -152,7 +179,10 @@ class BootstrapService {
         progress: 0.6,
         message: 'Installing Node.js...',
       ));
-      await NativeBridge.runInProot('apt-get install -y --no-install-recommends nodejs');
+      await NativeBridge.runInProot(
+        'apt-get install -y --no-install-recommends '
+        '-o Dpkg::Options::="--force-confdef" nodejs',
+      );
 
       onProgress(const SetupState(
         step: SetupStep.installingNode,

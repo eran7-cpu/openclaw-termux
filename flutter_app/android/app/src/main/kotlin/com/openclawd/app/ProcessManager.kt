@@ -53,6 +53,8 @@ class ProcessManager(
             "-b", "$procFakes/cap_last_cap:/proc/sys/kernel/cap_last_cap",
             "-b", "$procFakes/max_user_watches:/proc/sys/fs/inotify/max_user_watches",
             "-b", "$procFakes/fips_enabled:/proc/sys/crypto/fips_enabled",
+            // Shared memory (proot-distro binds this)
+            "-b", "$rootfsDir/tmp:/dev/shm",
             // Fake sys entries
             "-b", "$sysFakes/empty:/sys/fs/selinux",
             // App binds
@@ -60,7 +62,7 @@ class ProcessManager(
             "-b", "$homeDir:/root/home",
             "-w", "/root",
             "/bin/bash", "-c",
-            "export NODE_OPTIONS=\"$nodeOptions\" && export HOME=/root && export DEBIAN_FRONTEND=noninteractive && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && $command"
+            "export NODE_OPTIONS=\"$nodeOptions\" && export HOME=/root && export DEBIAN_FRONTEND=noninteractive && export TMPDIR=/tmp && export LANG=C.UTF-8 && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && $command"
         )
     }
 

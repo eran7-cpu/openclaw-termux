@@ -264,7 +264,15 @@ class BootstrapManager(
             )
         }
 
-        // 6. Fix executable permissions on critical directories.
+        // 7. Ensure /tmp exists with world-writable + sticky permissions
+        //    (needed for /dev/shm bind mount and general temp file usage)
+        val tmpDir = File("$rootfsDir/tmp")
+        tmpDir.mkdirs()
+        tmpDir.setReadable(true, false)
+        tmpDir.setWritable(true, false)
+        tmpDir.setExecutable(true, false)
+
+        // 8. Fix executable permissions on critical directories.
         //    Our Java extraction might not preserve all permission bits correctly
         //    (dpkg error 100 = "Could not exec dpkg" = permission issue).
         //    Recursively ensure all files in bin/sbin/lib dirs are executable.
@@ -277,7 +285,8 @@ class BootstrapManager(
      * may leave some binaries without +x, causing "Could not exec dpkg" (error 100).
      */
     private fun fixBinPermissions() {
-        val execDirs = listOf(
+        // Directories whose files (recursively) must be executable
+        val recursiveExecDirs = listOf(
             "$rootfsDir/usr/bin",
             "$rootfsDir/usr/sbin",
             "$rootfsDir/usr/local/bin",
@@ -285,20 +294,17 @@ class BootstrapManager(
             "$rootfsDir/usr/lib/apt/methods",
             "$rootfsDir/usr/lib/dpkg",
             "$rootfsDir/usr/libexec",
+            "$rootfsDir/var/lib/dpkg/info",    // dpkg maintainer scripts (preinst/postinst/prerm/postrm)
+            "$rootfsDir/usr/share/debconf",    // debconf frontend scripts
             // These might be symlinks to usr/* in merged /usr, but
             // if they're real dirs we need to fix them too
             "$rootfsDir/bin",
             "$rootfsDir/sbin",
         )
-        for (dirPath in execDirs) {
+        for (dirPath in recursiveExecDirs) {
             val dir = File(dirPath)
             if (dir.exists() && dir.isDirectory) {
-                dir.listFiles()?.forEach { file ->
-                    if (file.isFile) {
-                        file.setReadable(true, false)
-                        file.setExecutable(true, false)
-                    }
-                }
+                fixExecRecursive(dir)
             }
         }
         // Also fix shared libraries (dpkg, apt, etc. link against them)
@@ -310,6 +316,18 @@ class BootstrapManager(
             val dir = File(dirPath)
             if (dir.exists() && dir.isDirectory) {
                 fixSharedLibsRecursive(dir)
+            }
+        }
+    }
+
+    /** Recursively set +rx on all regular files in a directory tree. */
+    private fun fixExecRecursive(dir: File) {
+        dir.listFiles()?.forEach { file ->
+            if (file.isDirectory) {
+                fixExecRecursive(file)
+            } else if (file.isFile) {
+                file.setReadable(true, false)
+                file.setExecutable(true, false)
             }
         }
     }
