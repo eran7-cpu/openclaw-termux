@@ -132,15 +132,22 @@ class BootstrapManager(
                                             fos.write(buf, 0, len)
                                         }
                                     }
-                                    // Preserve permissions
-                                    if (entry.mode and 0b001_001_001 != 0) {
-                                        outFile.setExecutable(true, false)
-                                    }
-                                    if (entry.mode and 0b010_010_010 != 0) {
-                                        outFile.setWritable(true, false)
-                                    }
-                                    if (entry.mode and 0b100_100_100 != 0) {
-                                        outFile.setReadable(true, false)
+                                    // Preserve permissions — always ensure readable,
+                                    // and set executable if any exec bit is set in tar
+                                    outFile.setReadable(true, false)
+                                    outFile.setWritable(true, false)
+                                    val mode = entry.mode
+                                    if (mode == 0 || mode and 0b001_001_001 != 0) {
+                                        // If mode is 0 (unknown), default to executable
+                                        // for files in bin/sbin directories
+                                        val path = name.lowercase()
+                                        if (mode and 0b001_001_001 != 0 ||
+                                            path.contains("/bin/") ||
+                                            path.contains("/sbin/") ||
+                                            path.endsWith(".sh") ||
+                                            path.contains("/lib/apt/methods/")) {
+                                            outFile.setExecutable(true, false)
+                                        }
                                     }
                                 }
                             }
@@ -253,6 +260,66 @@ class BootstrapManager(
             if (!stub.exists()) {
                 stub.writeText("#!/bin/sh\n# proot stub - operations faked by proot -0\nexit 0\n")
                 stub.setExecutable(true, false)
+            }
+        }
+
+        // 6. Fix executable permissions on critical directories.
+        //    Our Java extraction might not preserve all permission bits correctly
+        //    (dpkg error 100 = "Could not exec dpkg" = permission issue).
+        //    Recursively ensure all files in bin/sbin/lib dirs are executable.
+        fixBinPermissions()
+    }
+
+    /**
+     * Ensure all files in executable directories have the execute bit set.
+     * Java's File API doesn't support full Unix permissions, so tar extraction
+     * may leave some binaries without +x, causing "Could not exec dpkg" (error 100).
+     */
+    private fun fixBinPermissions() {
+        val execDirs = listOf(
+            "$rootfsDir/usr/bin",
+            "$rootfsDir/usr/sbin",
+            "$rootfsDir/usr/local/bin",
+            "$rootfsDir/usr/local/sbin",
+            "$rootfsDir/usr/lib/apt/methods",
+            "$rootfsDir/usr/lib/dpkg",
+            "$rootfsDir/usr/libexec",
+            // These might be symlinks to usr/* in merged /usr, but
+            // if they're real dirs we need to fix them too
+            "$rootfsDir/bin",
+            "$rootfsDir/sbin",
+        )
+        for (dirPath in execDirs) {
+            val dir = File(dirPath)
+            if (dir.exists() && dir.isDirectory) {
+                dir.listFiles()?.forEach { file ->
+                    if (file.isFile) {
+                        file.setReadable(true, false)
+                        file.setExecutable(true, false)
+                    }
+                }
+            }
+        }
+        // Also fix shared libraries (dpkg, apt, etc. link against them)
+        val libDirs = listOf(
+            "$rootfsDir/usr/lib",
+            "$rootfsDir/lib",
+        )
+        for (dirPath in libDirs) {
+            val dir = File(dirPath)
+            if (dir.exists() && dir.isDirectory) {
+                fixSharedLibsRecursive(dir)
+            }
+        }
+    }
+
+    private fun fixSharedLibsRecursive(dir: File) {
+        dir.listFiles()?.forEach { file ->
+            if (file.isDirectory) {
+                fixSharedLibsRecursive(file)
+            } else if (file.name.endsWith(".so") || file.name.contains(".so.")) {
+                file.setReadable(true, false)
+                file.setExecutable(true, false)
             }
         }
     }
