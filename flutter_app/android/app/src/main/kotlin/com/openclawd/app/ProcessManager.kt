@@ -23,14 +23,15 @@ class ProcessManager(
         val procFakes = "$configDir/proc_fakes"
         val sysFakes = "$configDir/sys_fakes"
 
-        // Match proot-distro's login invocation as closely as possible.
-        // Missing flags/binds were causing dpkg error 100 (can't exec).
+        // Match proot-distro's run_proot_cmd() as closely as possible.
+        // NOTE: --sysvipc is deliberately omitted here (matching proot-distro).
+        // It causes assertion failures (SIGABRT) when dpkg forks child processes
+        // during package installation. Only enable it for interactive/gateway use.
         return listOf(
             prootPath,
             "-0",                           // Fake root (UID 0)
             "--link2symlink",               // Convert hard links to symlinks
             "-L",                           // Fix lstat for symlinks
-            "--sysvipc",                    // Enable System V IPC (dpkg needs this)
             "--kill-on-exit",               // Clean up child processes
             "--kernel-release=6.2.1-PRoot-Distro",
             "-r", rootfsDir,
@@ -71,6 +72,7 @@ class ProcessManager(
     private fun prootEnv(): Map<String, String> = mapOf(
         "PROOT_TMP_DIR" to tmpDir,
         "PROOT_NO_SECCOMP" to "1",
+        "PROOT_L2S_DIR" to "$rootfsDir/.l2s",
         "PROOT_LOADER" to "$nativeLibDir/libprootloader.so",
         "PROOT_LOADER_32" to "$nativeLibDir/libprootloader32.so",
         "LD_LIBRARY_PATH" to "$libDir:$nativeLibDir",
