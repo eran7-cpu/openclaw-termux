@@ -217,7 +217,10 @@ class BootstrapService {
       // loading the target script. Installed by installBionicBypass().
       // Also unset NODE_OPTIONS (bionic-bypass only needed at gateway runtime).
       const wrapper = '/root/.openclawd/node-wrapper.js';
-      const nodeRun = 'unset NODE_OPTIONS; node $wrapper';
+      // npm needs a writable cache dir; /root/.npm doesn't exist yet
+      // and mkdir inside proot can fail. Use /tmp/npm-cache instead.
+      const nodeRun =
+          'unset NODE_OPTIONS; npm_config_cache=/tmp/npm-cache node $wrapper';
       final npmCli = '/usr/lib/node_modules/npm/bin/npm-cli.js';
       await NativeBridge.runInProot(
         'node --version && $nodeRun $npmCli --version',
