@@ -32,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _loading = true;
   bool _finished = false;
   String? _error;
-  final _tokenUrlRegex = RegExp(r'https?://127\.0\.0\.1:18789[^\s\x1b]*');
+  final _tokenUrlRegex = RegExp(r'https?://(?:localhost|127\.0\.0\.1):18789[^\s\x1b]*');
   String _outputBuffer = '';
 
   static const _fontFallback = [

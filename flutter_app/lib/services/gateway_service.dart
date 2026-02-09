@@ -42,7 +42,7 @@ class GatewayService {
         }
         // Parse log for token URL
         String? dashboardUrl;
-        final urlMatch = RegExp(r'https?://127\.0\.0\.1:18789[^\s]*').firstMatch(log);
+        final urlMatch = RegExp(r'https?://(?:localhost|127\.0\.0\.1):18789[^\s]*').firstMatch(log);
         if (urlMatch != null) {
           dashboardUrl = urlMatch.group(0);
         }
