@@ -146,6 +146,21 @@ class MainActivity : FlutterActivity() {
                         result.error("INVALID_ARGS", "tarPath required", null)
                     }
                 }
+                "createBinWrappers" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName != null) {
+                        Thread {
+                            try {
+                                bootstrapManager.createBinWrappers(packageName)
+                                runOnUiThread { result.success(true) }
+                            } catch (e: Exception) {
+                                runOnUiThread { result.error("BIN_WRAPPER_ERROR", e.message, null) }
+                            }
+                        }.start()
+                    } else {
+                        result.error("INVALID_ARGS", "packageName required", null)
+                    }
+                }
                 else -> {
                     result.notImplemented()
                 }

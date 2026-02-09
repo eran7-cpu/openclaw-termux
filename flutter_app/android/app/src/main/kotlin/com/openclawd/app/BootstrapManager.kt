@@ -720,6 +720,68 @@ class BootstrapManager(
         File(tarPath).delete()
     }
 
+    /**
+     * Create shell wrapper scripts in /usr/local/bin/ for a globally-installed
+     * npm package. npm's `install -g` creates symlinks, but symlinks can fail
+     * silently in proot. Shell wrappers are a reliable fallback.
+     *
+     * Reads the package.json `bin` field directly from the rootfs filesystem
+     * (no shell escaping needed).
+     */
+    fun createBinWrappers(packageName: String) {
+        val pkgDir = File("$rootfsDir/usr/local/lib/node_modules/$packageName")
+        val pkgJson = File(pkgDir, "package.json")
+        if (!pkgJson.exists()) {
+            throw RuntimeException("Package not found: $pkgDir")
+        }
+
+        // Simple JSON parsing for the "bin" field
+        val json = pkgJson.readText()
+        val binDir = File("$rootfsDir/usr/local/bin")
+        binDir.mkdirs()
+
+        // Parse bin entries from package.json
+        // "bin": "cli.js"  OR  "bin": {"openclaw": "bin/openclaw.js", ...}
+        val binEntries = mutableMapOf<String, String>()
+
+        val binMatch = Regex(""""bin"\s*:\s*(\{[^}]*\}|"[^"]*")""").find(json)
+        if (binMatch != null) {
+            val value = binMatch.groupValues[1]
+            if (value.startsWith("{")) {
+                // Object: {"name": "path", ...}
+                Regex(""""([^"]+)"\s*:\s*"([^"]+)"""").findAll(value).forEach {
+                    binEntries[it.groupValues[1]] = it.groupValues[2]
+                }
+            } else {
+                // String: "path" — use package name as bin name
+                val path = value.trim('"')
+                binEntries[packageName] = path
+            }
+        }
+
+        if (binEntries.isEmpty()) {
+            // Fallback: check for common entry points
+            for (candidate in listOf("bin/$packageName.js", "bin/$packageName", "cli.js", "index.js")) {
+                if (File(pkgDir, candidate).exists()) {
+                    binEntries[packageName] = candidate
+                    break
+                }
+            }
+        }
+
+        for ((name, relPath) in binEntries) {
+            val binFile = File(binDir, name)
+            // Only create wrapper if the symlink doesn't already work
+            if (binFile.exists() && binFile.canExecute()) continue
+
+            val target = "/usr/local/lib/node_modules/$packageName/$relPath"
+            val wrapper = "#!/bin/sh\nexec node \"$target\" \"\$@\"\n"
+            binFile.writeText(wrapper)
+            binFile.setExecutable(true, false)
+            binFile.setReadable(true, false)
+        }
+    }
+
     private fun deleteRecursively(file: File) {
         if (file.isDirectory) {
             file.listFiles()?.forEach { deleteRecursively(it) }

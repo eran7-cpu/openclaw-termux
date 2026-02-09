@@ -70,6 +70,10 @@ class NativeBridge {
     return await _channel.invokeMethod('extractNodeTarball', {'tarPath': tarPath});
   }
 
+  static Future<bool> createBinWrappers(String packageName) async {
+    return await _channel.invokeMethod('createBinWrappers', {'packageName': packageName});
+  }
+
   static Stream<String> get gatewayLogStream {
     return _eventChannel.receiveBroadcastStream().map((event) => event.toString());
   }

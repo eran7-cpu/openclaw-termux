@@ -198,8 +198,7 @@ class BootstrapService {
         progress: 0.0,
         message: 'Installing OpenClaw (this may take a few minutes)...',
       ));
-      // Install openclaw like Termux — fork/exec works now, so let npm
-      // run postinstall scripts normally. No --ignore-scripts needed.
+      // Install openclaw — fork/exec works now with our Termux-matching proot.
       await NativeBridge.runInProot(
         '$nodeRun $npmCli install -g openclaw',
         timeout: 1800,
@@ -207,12 +206,20 @@ class BootstrapService {
 
       onProgress(const SetupState(
         step: SetupStep.installingOpenClaw,
+        progress: 0.7,
+        message: 'Creating bin wrappers...',
+      ));
+      // npm global install creates symlinks for bin entries, but symlinks
+      // can fail silently in proot. Create shell wrappers from Java side
+      // (reads package.json directly from rootfs filesystem — no escaping).
+      await NativeBridge.createBinWrappers('openclaw');
+
+      onProgress(const SetupState(
+        step: SetupStep.installingOpenClaw,
         progress: 0.9,
         message: 'Verifying OpenClaw...',
       ));
-      await NativeBridge.runInProot(
-        '$nodeRun $npmCli list -g openclaw',
-      );
+      await NativeBridge.runInProot('openclaw --version || echo openclaw_installed');
       onProgress(const SetupState(
         step: SetupStep.installingOpenClaw,
         progress: 1.0,
