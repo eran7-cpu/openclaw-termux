@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:xterm/xterm.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import '../services/terminal_service.dart';
+import '../widgets/terminal_toolbar.dart';
 
 class TerminalScreen extends StatefulWidget {
   const TerminalScreen({super.key});
@@ -144,12 +145,19 @@ class _TerminalScreenState extends State<TerminalScreen> {
       );
     }
 
-    return TerminalView(
-      _terminal,
-      textStyle: const TerminalStyle(
-        fontSize: 14,
-        fontFamily: 'monospace',
-      ),
+    return Column(
+      children: [
+        Expanded(
+          child: TerminalView(
+            _terminal,
+            textStyle: const TerminalStyle(
+              fontSize: 14,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+        TerminalToolbar(pty: _pty),
+      ],
     );
   }
 }

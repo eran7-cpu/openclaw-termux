@@ -4,6 +4,7 @@ import 'package:xterm/xterm.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import '../services/terminal_service.dart';
 import '../services/preferences_service.dart';
+import '../widgets/terminal_toolbar.dart';
 import 'dashboard_screen.dart';
 
 /// Runs `openclaw onboard` in a terminal so the user can configure
@@ -178,7 +179,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             )
-          else
+          else ...[
             Expanded(
               child: TerminalView(
                 _terminal,
@@ -188,6 +189,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
+            TerminalToolbar(pty: _pty),
+          ],
           if (_finished)
             Padding(
               padding: const EdgeInsets.all(16),
