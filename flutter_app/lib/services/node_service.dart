@@ -147,15 +147,14 @@ class NodeService {
     await prefs.init();
     final deviceToken = prefs.nodeDeviceToken;
 
-    // For local connections, read the gateway auth token from config
-    final isLocal = _state.gatewayHost == '127.0.0.1' ||
-        _state.gatewayHost == 'localhost';
-    if (isLocal && _gatewayAuthToken == null) {
+    // For local connections, read the gateway auth token from dashboard URL
+    if (_gatewayAuthToken == null) {
       _gatewayAuthToken = await _readGatewayToken();
     }
 
-    // Use device token if available, otherwise gateway auth token
-    final authToken = deviceToken ?? _gatewayAuthToken;
+    // Prefer gateway auth token (exact match); fall back to device token
+    // (gateway verifies device tokens as fallback if gateway token check fails)
+    final authToken = _gatewayAuthToken ?? deviceToken;
 
     const clientId = 'node-host';
     const clientMode = 'node';
