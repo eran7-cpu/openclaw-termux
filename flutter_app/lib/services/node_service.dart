@@ -84,8 +84,6 @@ class NodeService {
   void _onFrame(NodeFrame frame) {
     if (frame.isEvent) {
       _handleEvent(frame);
-    } else if (frame.isRequest) {
-      _handleInvoke(frame);
     }
   }
 
@@ -118,6 +116,10 @@ class NodeService {
             errorMessage: '$e',
           ));
         }
+        break;
+
+      case 'node.invoke.request':
+        await _handleInvokeRequest(frame.payload ?? {});
         break;
     }
   }
@@ -314,31 +316,73 @@ class NodeService {
     }
   }
 
-  Future<void> _handleInvoke(NodeFrame frame) async {
-    final method = frame.method;
-    if (method == null || frame.id == null) return;
+  /// Handle a node.invoke.request event from the gateway.
+  /// The gateway sends: event "node.invoke.request" with payload:
+  ///   {id, nodeId, command, paramsJSON, timeoutMs}
+  /// We must respond by sending a request "node.invoke.result" with:
+  ///   {id, nodeId, ok, payload/payloadJSON, error}
+  Future<void> _handleInvokeRequest(Map<String, dynamic> invokePayload) async {
+    final requestId = invokePayload['id'] as String?;
+    final command = invokePayload['command'] as String?;
+    final nodeId = invokePayload['nodeId'] as String? ?? _identity.deviceId;
+    final paramsJSON = invokePayload['paramsJSON'] as String?;
 
-    _log('[NODE] Invoke: $method');
-    final handler = _capabilityHandlers[method];
+    if (requestId == null || command == null) {
+      _log('[NODE] Invoke missing id or command');
+      return;
+    }
+
+    _log('[NODE] Invoke: $command');
+
+    Map<String, dynamic> commandParams = {};
+    if (paramsJSON != null && paramsJSON.isNotEmpty) {
+      try {
+        commandParams = Map<String, dynamic>.from(
+            jsonDecode(paramsJSON) as Map);
+      } catch (_) {}
+    }
+
+    final handler = _capabilityHandlers[command];
     if (handler == null) {
-      _ws.send(NodeFrame.response(frame.id!, error: {
-        'code': 'NOT_SUPPORTED',
-        'message': 'Capability $method not available',
+      _log('[NODE] Unknown command: $command');
+      _ws.sendRequest(NodeFrame.request('node.invoke.result', {
+        'id': requestId,
+        'nodeId': nodeId,
+        'ok': false,
+        'error': {
+          'code': 'NOT_SUPPORTED',
+          'message': 'Capability $command not available',
+        },
       }));
       return;
     }
 
     try {
-      final result = await handler(method, frame.params ?? {});
+      final result = await handler(command, commandParams);
+      final resultPayload = <String, dynamic>{
+        'id': requestId,
+        'nodeId': nodeId,
+      };
       if (result.isError) {
-        _ws.send(NodeFrame.response(frame.id!, error: result.error));
+        resultPayload['ok'] = false;
+        resultPayload['error'] = result.error;
       } else {
-        _ws.send(NodeFrame.response(frame.id!, payload: result.payload));
+        resultPayload['ok'] = true;
+        if (result.payload != null) {
+          resultPayload['payloadJSON'] = jsonEncode(result.payload);
+        }
       }
+      _ws.sendRequest(NodeFrame.request('node.invoke.result', resultPayload));
+      _log('[NODE] Invoke result sent for $command');
     } catch (e) {
-      _ws.send(NodeFrame.response(frame.id!, error: {
-        'code': 'INVOKE_ERROR',
-        'message': '$e',
+      _ws.sendRequest(NodeFrame.request('node.invoke.result', {
+        'id': requestId,
+        'nodeId': nodeId,
+        'ok': false,
+        'error': {
+          'code': 'INVOKE_ERROR',
+          'message': '$e',
+        },
       }));
     }
   }
