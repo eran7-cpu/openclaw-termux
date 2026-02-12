@@ -41,7 +41,7 @@ class NodeService {
       Future<NodeFrame> Function(String command, Map<String, dynamic> params)
           handler) {
     for (final cmd in commands) {
-      _capabilityHandlers['$name.$cmd'] = handler;
+      _capabilityHandlers[cmd] = handler;
     }
   }
 
