@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../providers/gateway_provider.dart';
 
 class LogsScreen extends StatefulWidget {
@@ -54,9 +55,6 @@ class _LogsScreenState extends State<LogsScreen> {
               decoration: InputDecoration(
                 hintText: 'Filter logs...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -132,10 +130,10 @@ class _LogsScreenState extends State<LogsScreen> {
       return theme.colorScheme.error;
     }
     if (line.contains('[WARN]') || line.contains('WARNING')) {
-      return Colors.orange;
+      return AppColors.statusAmber;
     }
     if (line.contains('[INFO]')) {
-      return theme.colorScheme.primary;
+      return AppColors.mutedText;
     }
     return theme.colorScheme.onSurface;
   }

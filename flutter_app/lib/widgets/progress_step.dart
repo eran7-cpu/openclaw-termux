@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app.dart';
 
 class ProgressStep extends StatelessWidget {
   final int stepNumber;
@@ -29,7 +30,7 @@ class ProgressStep extends StatelessWidget {
       circleColor = theme.colorScheme.error;
       circleChild = const Icon(Icons.close, color: Colors.white, size: 16);
     } else if (isComplete) {
-      circleColor = Colors.green;
+      circleColor = AppColors.statusGreen;
       circleChild = const Icon(Icons.check, color: Colors.white, size: 16);
     } else if (isActive) {
       circleColor = theme.colorScheme.primary;

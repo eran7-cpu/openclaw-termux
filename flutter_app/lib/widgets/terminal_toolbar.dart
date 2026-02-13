@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_pty/flutter_pty.dart';
+import '../app.dart';
 
 /// Termux-style extra keys toolbar for terminal screens.
 /// Provides ESC, CTRL, ALT, TAB, arrows, and common special characters.
@@ -65,9 +66,9 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE0E0E0);
-    final btnColor = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE);
-    final activeColor = theme.colorScheme.primary;
+    final bgColor = isDark ? AppColors.darkBg : const Color(0xFFE0E0E0);
+    final btnColor = isDark ? AppColors.darkSurfaceAlt : const Color(0xFFEEEEEE);
+    final activeColor = AppColors.accent;
     final textColor = isDark ? Colors.white70 : Colors.black87;
 
     Widget keyButton(String label, {VoidCallback? onTap, String? sendData, bool active = false, double? width}) {
@@ -75,9 +76,9 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
         padding: const EdgeInsets.symmetric(horizontal: 1.5),
         child: Material(
           color: active ? activeColor : btnColor,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
           child: InkWell(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
             onTap: onTap ?? () => _send(sendData ?? label),
             child: Container(
               width: width,
@@ -104,9 +105,9 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
         padding: const EdgeInsets.symmetric(horizontal: 1),
         child: Material(
           color: btnColor,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
           child: InkWell(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
             onTap: () => _send(escSequence),
             child: Container(
               constraints: const BoxConstraints(minWidth: 34, minHeight: 34),

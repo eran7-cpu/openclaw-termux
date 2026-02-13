@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../app.dart';
 import '../constants.dart';
 import '../providers/node_provider.dart';
 import '../services/native_bridge.dart';
@@ -78,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                _sectionHeader(theme, 'General'),
+                _sectionHeader(theme, 'GENERAL'),
                 SwitchListTile(
                   title: const Text('Auto-start gateway'),
                   subtitle: const Text('Start the gateway when the app opens'),
@@ -95,8 +96,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : 'Unrestricted (recommended)'),
                   leading: const Icon(Icons.battery_alert),
                   trailing: _batteryOptimized
-                      ? const Icon(Icons.warning, color: Colors.orange)
-                      : const Icon(Icons.check_circle, color: Colors.green),
+                      ? const Icon(Icons.warning, color: AppColors.statusAmber)
+                      : const Icon(Icons.check_circle, color: AppColors.statusGreen),
                   onTap: () async {
                     await NativeBridge.requestBatteryOptimization();
                     // Refresh status after returning from settings
@@ -105,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 const Divider(),
-                _sectionHeader(theme, 'Node'),
+                _sectionHeader(theme, 'NODE'),
                 SwitchListTile(
                   title: const Text('Enable Node'),
                   subtitle: const Text('Provide device capabilities to the gateway'),
@@ -131,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const Divider(),
-                _sectionHeader(theme, 'System Info'),
+                _sectionHeader(theme, 'SYSTEM INFO'),
                 ListTile(
                   title: const Text('Architecture'),
                   subtitle: Text(_arch),
@@ -178,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.science),
                 ),
                 const Divider(),
-                _sectionHeader(theme, 'Maintenance'),
+                _sectionHeader(theme, 'MAINTENANCE'),
                 ListTile(
                   title: const Text('Re-run setup'),
                   subtitle: const Text('Reinstall or repair the environment'),
@@ -191,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const Divider(),
-                _sectionHeader(theme, 'About'),
+                _sectionHeader(theme, 'ABOUT'),
                 const ListTile(
                   title: Text('OpenClaw'),
                   subtitle: Text(
@@ -230,7 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: Icon(Icons.description),
                 ),
                 const Divider(),
-                _sectionHeader(theme, AppConstants.orgName),
+                _sectionHeader(theme, AppConstants.orgName.toUpperCase()),
                 ListTile(
                   title: const Text('Instagram'),
                   subtitle: const Text('@nexgenxplorer_nxg'),
@@ -280,9 +281,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Text(
         title,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
         ),
       ),
     );

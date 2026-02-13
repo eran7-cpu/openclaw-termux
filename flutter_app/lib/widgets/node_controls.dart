@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../models/node_state.dart';
 import '../providers/node_provider.dart';
 import '../screens/node_screen.dart';
@@ -16,7 +17,6 @@ class NodeControls extends StatelessWidget {
         final state = provider.state;
 
         return Card(
-          elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -24,14 +24,15 @@ class NodeControls extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _statusDot(state.status),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Node ${state.statusText}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Node',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    _statusBadge(state.status, theme),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -80,12 +81,9 @@ class NodeControls extends StatelessWidget {
                         label: const Text('Enable Node'),
                       ),
                     if (!state.isDisabled) ...[
-                      FilledButton.icon(
+                      OutlinedButton.icon(
                         onPressed: () => provider.disable(),
                         icon: const Icon(Icons.stop),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: theme.colorScheme.error,
-                        ),
                         label: const Text('Disable Node'),
                       ),
                       if (state.status == NodeStatus.error ||
@@ -113,35 +111,55 @@ class NodeControls extends StatelessWidget {
     );
   }
 
-  Widget _statusDot(NodeStatus status) {
+  Widget _statusBadge(NodeStatus status, ThemeData theme) {
     Color color;
+    String label;
+    IconData icon;
+
     switch (status) {
       case NodeStatus.paired:
-        color = Colors.green;
+        color = AppColors.statusGreen;
+        label = 'Paired';
+        icon = Icons.check_circle_outline;
       case NodeStatus.connecting:
       case NodeStatus.challenging:
       case NodeStatus.pairing:
-        color = Colors.orange;
+        color = AppColors.statusAmber;
+        label = 'Connecting';
+        icon = Icons.hourglass_top;
       case NodeStatus.error:
-        color = Colors.red;
+        color = AppColors.statusRed;
+        label = 'Error';
+        icon = Icons.error_outline;
       case NodeStatus.disabled:
+        color = AppColors.statusGrey;
+        label = 'Disabled';
+        icon = Icons.circle_outlined;
       case NodeStatus.disconnected:
-        color = Colors.grey;
+        color = AppColors.statusGrey;
+        label = 'Disconnected';
+        icon = Icons.link_off;
     }
 
     return Container(
-      width: 12,
-      height: 12,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          if (status == NodeStatus.paired)
-            BoxShadow(
-              color: color.withAlpha(100),
-              blurRadius: 8,
-              spreadRadius: 2,
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withAlpha(60)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
+          ),
         ],
       ),
     );

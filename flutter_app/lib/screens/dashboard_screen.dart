@@ -38,19 +38,22 @@ class DashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const GatewayControls(),
-            const SizedBox(height: 16),
-            Text(
-              'Quick Actions',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'QUICK ACTIONS',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
-            const SizedBox(height: 8),
             StatusCard(
               title: 'Terminal',
               subtitle: 'Open Ubuntu shell with OpenClaw',
               icon: Icons.terminal,
-              color: Colors.blueGrey,
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const TerminalScreen()),
@@ -64,7 +67,6 @@ class DashboardScreen extends StatelessWidget {
                       ? 'Open OpenClaw dashboard in browser'
                       : 'Start gateway first',
                   icon: Icons.dashboard,
-                  color: Colors.indigo,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: provider.state.isRunning
                       ? () => Navigator.of(context).push(
@@ -82,7 +84,6 @@ class DashboardScreen extends StatelessWidget {
               title: 'Onboarding',
               subtitle: 'Configure API keys and binding',
               icon: Icons.vpn_key,
-              color: Colors.deepPurple,
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const OnboardingScreen()),
@@ -92,7 +93,6 @@ class DashboardScreen extends StatelessWidget {
               title: 'Packages',
               subtitle: 'Install optional tools (Go, Homebrew)',
               icon: Icons.extension,
-              color: Colors.orange,
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PackagesScreen()),
@@ -102,7 +102,6 @@ class DashboardScreen extends StatelessWidget {
               title: 'Logs',
               subtitle: 'View gateway output and errors',
               icon: Icons.article_outlined,
-              color: Colors.teal,
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LogsScreen()),
@@ -119,7 +118,6 @@ class DashboardScreen extends StatelessWidget {
                           ? 'Device capabilities for AI'
                           : nodeState.statusText,
                   icon: Icons.devices,
-                  color: Colors.green,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const NodeScreen()),

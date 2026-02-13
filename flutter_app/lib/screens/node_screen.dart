@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../providers/node_provider.dart';
 import '../services/preferences_service.dart';
 import '../widgets/node_controls.dart';
@@ -66,7 +67,7 @@ class _NodeScreenState extends State<NodeScreen> {
                     const SizedBox(height: 16),
 
                     // Gateway Connection
-                    _sectionHeader(theme, 'Gateway Connection'),
+                    _sectionHeader(theme, 'GATEWAY CONNECTION'),
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -98,7 +99,6 @@ class _NodeScreenState extends State<NodeScreen> {
                                 decoration: const InputDecoration(
                                   labelText: 'Gateway Host',
                                   hintText: '192.168.1.100',
-                                  border: OutlineInputBorder(),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -107,7 +107,6 @@ class _NodeScreenState extends State<NodeScreen> {
                                 decoration: const InputDecoration(
                                   labelText: 'Gateway Port',
                                   hintText: '18789',
-                                  border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.number,
                               ),
@@ -118,7 +117,6 @@ class _NodeScreenState extends State<NodeScreen> {
                                   labelText: 'Gateway Token',
                                   hintText: 'Paste token from gateway dashboard URL',
                                   helperText: 'Found in dashboard URL after #token=',
-                                  border: OutlineInputBorder(),
                                   prefixIcon: Icon(Icons.key),
                                 ),
                                 obscureText: true,
@@ -146,7 +144,7 @@ class _NodeScreenState extends State<NodeScreen> {
 
                     // Pairing Status
                     if (state.pairingCode != null) ...[
-                      _sectionHeader(theme, 'Pairing'),
+                      _sectionHeader(theme, 'PAIRING'),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -175,7 +173,7 @@ class _NodeScreenState extends State<NodeScreen> {
                     ],
 
                     // Capabilities
-                    _sectionHeader(theme, 'Capabilities'),
+                    _sectionHeader(theme, 'CAPABILITIES'),
                     _capabilityTile(
                       theme,
                       'Camera',
@@ -222,7 +220,7 @@ class _NodeScreenState extends State<NodeScreen> {
 
                     // Device Info
                     if (state.deviceId != null) ...[
-                      _sectionHeader(theme, 'Device Info'),
+                      _sectionHeader(theme, 'DEVICE INFO'),
                       ListTile(
                         title: const Text('Device ID'),
                         subtitle: SelectableText(
@@ -235,7 +233,7 @@ class _NodeScreenState extends State<NodeScreen> {
                     const SizedBox(height: 16),
 
                     // Logs
-                    _sectionHeader(theme, 'Node Logs'),
+                    _sectionHeader(theme, 'NODE LOGS'),
                     Card(
                       child: Container(
                         height: 200,
@@ -277,9 +275,10 @@ class _NodeScreenState extends State<NodeScreen> {
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
       child: Text(
         title,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -289,12 +288,12 @@ class _NodeScreenState extends State<NodeScreen> {
       ThemeData theme, String title, String subtitle, IconData icon) {
     return Card(
       child: ListTile(
-        leading: Icon(icon, color: theme.colorScheme.primary),
+        leading: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.check_circle,
-          color: theme.colorScheme.primary.withAlpha(150),
+          color: AppColors.statusGreen,
           size: 20,
         ),
       ),

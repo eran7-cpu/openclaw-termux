@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app.dart';
 import '../models/optional_package.dart';
 import '../services/package_service.dart';
 import 'package_install_screen.dart';
@@ -76,6 +77,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Optional Packages')),
@@ -92,14 +94,15 @@ class _PackagesScreenState extends State<PackagesScreen> {
                 ),
                 const SizedBox(height: 16),
                 for (final pkg in OptionalPackage.all)
-                  _buildPackageCard(theme, pkg),
+                  _buildPackageCard(theme, pkg, isDark),
               ],
             ),
     );
   }
 
-  Widget _buildPackageCard(ThemeData theme, OptionalPackage package) {
+  Widget _buildPackageCard(ThemeData theme, OptionalPackage package, bool isDark) {
     final installed = _statuses[package.id] ?? false;
+    final iconBg = isDark ? AppColors.darkSurfaceAlt : const Color(0xFFF3F4F6);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -111,10 +114,10 @@ class _PackagesScreenState extends State<PackagesScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: package.color.withOpacity(0.15),
+                color: iconBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(package.icon, color: package.color),
+              child: Icon(package.icon, color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -137,13 +140,13 @@ class _PackagesScreenState extends State<PackagesScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.15),
+                            color: AppColors.statusGreen.withAlpha(25),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             'Installed',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: Colors.green,
+                              color: AppColors.statusGreen,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

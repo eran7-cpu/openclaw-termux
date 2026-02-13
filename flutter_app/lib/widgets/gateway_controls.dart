@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../constants.dart';
 import '../models/gateway_state.dart';
 import '../providers/gateway_provider.dart';
@@ -18,7 +19,6 @@ class GatewayControls extends StatelessWidget {
         final state = provider.state;
 
         return Card(
-          elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -26,14 +26,15 @@ class GatewayControls extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _statusDot(state.status),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Gateway ${state.statusText}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Gateway',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    _statusBadge(state.status, theme),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -83,12 +84,9 @@ class GatewayControls extends StatelessWidget {
                         label: const Text('Start Gateway'),
                       ),
                     if (state.isRunning || state.status == GatewayStatus.starting)
-                      FilledButton.icon(
+                      OutlinedButton.icon(
                         onPressed: () => provider.stop(),
                         icon: const Icon(Icons.stop),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: theme.colorScheme.error,
-                        ),
                         label: const Text('Stop Gateway'),
                       ),
                     OutlinedButton.icon(
@@ -108,32 +106,49 @@ class GatewayControls extends StatelessWidget {
     );
   }
 
-  Widget _statusDot(GatewayStatus status) {
+  Widget _statusBadge(GatewayStatus status, ThemeData theme) {
     Color color;
+    String label;
+    IconData icon;
+
     switch (status) {
       case GatewayStatus.running:
-        color = Colors.green;
+        color = AppColors.statusGreen;
+        label = 'Running';
+        icon = Icons.check_circle_outline;
       case GatewayStatus.starting:
-        color = Colors.orange;
+        color = AppColors.statusAmber;
+        label = 'Starting';
+        icon = Icons.hourglass_top;
       case GatewayStatus.error:
-        color = Colors.red;
+        color = AppColors.statusRed;
+        label = 'Error';
+        icon = Icons.error_outline;
       case GatewayStatus.stopped:
-        color = Colors.grey;
+        color = AppColors.statusGrey;
+        label = 'Stopped';
+        icon = Icons.circle_outlined;
     }
 
     return Container(
-      width: 12,
-      height: 12,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          if (status == GatewayStatus.running)
-            BoxShadow(
-              color: color.withAlpha(100),
-              blurRadius: 8,
-              spreadRadius: 2,
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withAlpha(60)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
+          ),
         ],
       ),
     );

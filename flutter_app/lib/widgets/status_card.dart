@@ -21,10 +21,11 @@ class StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cardColor = color ?? theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    final iconBg = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF3F4F6);
+    final iconColor = theme.colorScheme.onSurfaceVariant;
 
     return Card(
-      elevation: 2,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -35,10 +36,10 @@ class StatusCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: cardColor.withAlpha(30),
+                  color: iconBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: cardColor, size: 28),
+                child: Icon(icon, color: iconColor, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(

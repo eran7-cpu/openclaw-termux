@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../constants.dart';
 import '../models/setup_state.dart';
 import '../models/optional_package.dart';
@@ -37,6 +38,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -78,7 +80,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   ),
                   const SizedBox(height: 32),
                   Expanded(
-                    child: _buildSteps(state, theme),
+                    child: _buildSteps(state, theme, isDark),
                   ),
                   if (state.hasError) ...[
                     ConstrainedBox(
@@ -160,7 +162,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
-  Widget _buildSteps(SetupState state, ThemeData theme) {
+  Widget _buildSteps(SetupState state, ThemeData theme, bool isDark) {
     final steps = [
       (1, 'Download Ubuntu rootfs', SetupStep.downloadingRootfs),
       (2, 'Extract rootfs', SetupStep.extractingRootfs),
@@ -190,22 +192,25 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              'Optional Packages',
-              style: theme.textTheme.titleSmall?.copyWith(
+              'OPTIONAL PACKAGES',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
               ),
             ),
           ),
           const SizedBox(height: 8),
           for (final pkg in OptionalPackage.all)
-            _buildPackageTile(theme, pkg),
+            _buildPackageTile(theme, pkg, isDark),
         ],
       ],
     );
   }
 
-  Widget _buildPackageTile(ThemeData theme, OptionalPackage package) {
+  Widget _buildPackageTile(ThemeData theme, OptionalPackage package, bool isDark) {
     final installed = _pkgStatuses[package.id] ?? false;
+    final iconBg = isDark ? AppColors.darkSurfaceAlt : const Color(0xFFF3F4F6);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -214,10 +219,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: package.color.withOpacity(0.15),
+            color: iconBg,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(package.icon, color: package.color, size: 22),
+          child: Icon(package.icon, color: theme.colorScheme.onSurfaceVariant, size: 22),
         ),
         title: Row(
           children: [
@@ -229,12 +234,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
+                  color: AppColors.statusGreen.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text('Installed',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.green,
+                      color: AppColors.statusGreen,
                       fontWeight: FontWeight.w600,
                     )),
               ),
@@ -243,7 +248,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         ),
         subtitle: Text('${package.description} (${package.estimatedSize})'),
         trailing: installed
-            ? const Icon(Icons.check_circle, color: Colors.green)
+            ? const Icon(Icons.check_circle, color: AppColors.statusGreen)
             : OutlinedButton(
                 onPressed: () => _installPackage(package),
                 child: const Text('Install'),
