@@ -10,7 +10,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mithun50/openclaw-termux/pulls)
 
 <p align="center">
-  <img src="assets/mockup.png" alt="OpenClaw App Mockup" width="700"/>
+  <img src="assets/ic_launcher.png" alt="OpenClaw App Mockup" width="700"/>
 </p>
 
 > Run **OpenClaw AI Gateway** on Android — standalone Flutter app with built-in terminal, web dashboard, optional dev tools, and one-tap setup. Also available as a Termux CLI package.
